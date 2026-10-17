@@ -27,6 +27,8 @@
 <div align="center">
   <sub>© 2026 Pizzalign. Todos os direitos reservados.</sub>
 </div>
+
+
 ## Contribuidores:
 
 Matheus Costa - mplc@cesar.school
