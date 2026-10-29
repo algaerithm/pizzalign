@@ -81,3 +81,27 @@ static int pontuar (int pos, int carta){ // Qtd de pontos por colocar a carta na
  
 // segue pra parte 3
 
+// 29/10/26 - 12:57 PM
+
+static int melhor_jogada(const int mao[3], int sorteio){
+    int casas = tamanho * tamanho;
+    int melhor = -1;
+    int resposta = -1;
+
+    for (int i = 0; i < 3; i++) {
+        int c = (i + sorteio) % 3;
+        for (int j = 0; j < casas; j++) {
+            int pos = (j + sorteio) % casas;
+            if (tabuleiro[pos] != VAZIA) {
+                continue;
+            }
+            int p = pontuar(pos, mao[c]);
+            if (p > melhor) {
+                melhor = p;
+                resposta = c * 100 + pos;
+            }
+        }
+    }
+    return resposta;
+}
+
