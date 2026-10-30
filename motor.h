@@ -3,7 +3,7 @@
 #define MAX_LADO 5 //maior tabuleiro
 #define VAZIA (-1) //casa sem carta
 
-static const int FATIAS[8] = {0, 1, 3, 5, 6, 5, 3, 1}; // [caixa vazia = 0] - [uma fatia (esquerda)] - [metade (esquerda) = 2] - [faltando uma fatia (esquerda) = 3] - [pizza inteira = 4] - [faltando uma fatia (direita) = 5] - [metade (direita) = 6] - [uma fatia (direita) = 7]
+static const int FATIAS[8] = {0, 1, 3, 5, 6, 5, 3, 1}; // [caixa vazia = 0] - [uma fatia (esquerda) = 1] - [metade (esquerda) = 2] - [faltando uma fatia (direito) = 3] - [pizza inteira = 4] - [faltando uma fatia (esquerdo) = 5] - [metade (direita) = 6] - [uma fatia (direita) = 7]
 static const int LADO[8] = {0, -1, -1, 1, 0, -1, 1, 1}; // lado da pizza: -1 = esquerda / 1 = direita / 0 = caixa vazia ou inteira
 
 static int tamanho = 4; 
