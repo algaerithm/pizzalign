@@ -1,16 +1,22 @@
   <h1 align="center">🍕 PizzAlign</h1>
   
-Este é um projeto desenvolvido para a disciplina de Programação Imperativa e Funcional (PIF). O projeto consiste em um jogo casual dinâmico construído em C para rodar no terminal (linha de comando), utilizando a biblioteca `cli-lib` e aplicando conceitos de estruturas, ponteiros, matrizes, alocação dinâmica, listas encadeadas e manipulação de arquivos.
+Este é um projeto desenvolvido para a disciplina de Programação Imperativa e Funcional (PIF). O projeto consiste em um jogo casual dinâmico construído em C, com interface gráfica em janela, utilizando a biblioteca raylib e aplicando conceitos de estruturas, ponteiros, matrizes, alocação dinâmica, listas encadeadas e manipulação de arquivos.
 
 ## Sobre
 
-**PizzAlign** mistura a lógica de quebra-cabeças com o dinamismo dos jogos de queda de blocos. O design e as mecânicas tiraram inspiração de três jogos:
+**PizzAlign** mistura a lógica de quebra-cabeças com o dinamismo dos jogos de queda de blocos. O design e as mecânicas tiraram inspiração de vários jogos:
 
 *Tetris:* A gravidade contínua, o formato de tabuleiro em matriz e a necessidade de "limpar o espaço" antes que transborde;
 
 *Half Moon (Google):* A ideia central de juntar frações para formar um círculo (neste caso, uma pizza) completo;
 
-*Suika Game (Watermelon Game):* A mecânica de colisão e fusão (evolução) baseada em compatibilidade.
+*Suika Game (Watermelon Game):* A mecânica de colisão e fusão (evolução) baseada em compatibilidade;
+
+*Overcooked:* O visual, com texturas de ingredientes, balcões de madeira e animações;
+
+*Make7 / 2048:* Os blocos arredondados com números centralizados, cores distintas para cada valor de fatia e efeitos de escala ao fundir peças;
+
+*Tetris Effect:* O feedback visual e sonoro que torna cada combinação satisfatória, com um efeito de partículas ao fechar uma pizza inteira.
 
 ## Regras
 
@@ -52,31 +58,44 @@ Para executar este jogo, você precisará de um ambiente baseado em Unix (Linux,
 
 * `make` (Ferramenta de automação de compilação)
 
+* `raylib` (Biblioteca gráfica)
+
 ### Passo a Passo
+Instalando a raylib
+Linux (Debian/Ubuntu):
+bash
+  sudo apt update
+  sudo apt install build-essential libraylib-dev
 
-1. **Clone o repositório:**
+Caso libraylib-dev não esteja disponível na sua distribuição, siga o guia de compilação da raylib a partir do código-fonte.
 
-   ```
+macOS (Homebrew):
+bash
+  brew install raylib
+Windows: use o MSYS2 (terminal MinGW64):
+bash
+  pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-raylib
+
+Alternativamente, o instalador oficial da raylib já inclui o w64devkit com tudo configurado.
+
+Nota: o jogo não roda mais no terminal. Ao executar, uma janela gráfica será aberta. Em WSL, é necessário ter suporte a interface gráfica (WSLg, no Windows 11).
+
+Passo a Passo
+Clone o repositório:
+bash
    git clone https://github.com/thelimacosta/pizzalign.git
    cd pizzalign
-   
-   ```
-
-2. **Compile o projeto:**
-   Utilize o `Makefile` incluído na raiz do projeto. No terminal, digite:
-
-   ```
+Compile o projeto: Utilize o Makefile incluído na raiz do projeto. No terminal, digite:
+bash
    make
-   
-   ```
 
-3. **Inicie o jogo:**
-   Após a compilação, execute o binário gerado:
+O Makefile já faz a ligação com a raylib (-lraylib e dependências do sistema). Se a raylib estiver instalada em um caminho fora do padrão, ajuste as variáveis CFLAGS e LDFLAGS no Makefile.
 
-   ```
+Inicie o jogo: Após a compilação, execute o binário gerado:
+bash
    ./pizzalign
-   
-   ```
+
+Os arquivos de recursos (imagens, fontes, sons), se houver, devem permanecer na pasta do projeto ao executar o jogo.
 
 ## Equipe
 
