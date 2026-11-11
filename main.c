@@ -150,6 +150,40 @@ void desenharProximaFatia(const EstadoJogo *jogo) {
         printf("[ Fila Vazia ]");
     }
 }
+
+void desenharTabuleiro(const EstadoJogo *jogo) {
+    const int offsetX = 2;
+    const int offsetY = 2;
+
+    for (int y = 0; y < alturaTab; y++) {
+        screenGotoxy(offsetX, offsetY + y);
+    
+        printf("|");
+        for (int x = 0; x < larguraTab; x++) {
+            if (y == jogo->fatiaAtual.y && x == jogo->fatiaAtual.x) {
+                printf("%d", jogo->fatiaAtual.pedacos);
+            }
+            else if (jogo->tab[y][x] > 0) {
+                printf("%d", jogo->tab[y][x]);
+            }
+            else {
+                printf(" ");
+            }
+        }
+        printf("|");
+    }
+
+    screenGotoxy(offsetX, offsetY + alturaTab);
+    printf("+");
+    for (int x = 0; x < larguraTab; x++) {
+        printf("-");
+    }
+    printf("+");
+
+    screenGotoxy(offsetX, offsetY + alturaTab + 2);
+    printf("PONTUACAO: %06d", jogo->pontuacao);
+}
+
 int main() {
     EstadoJogo jogo; // guarda todo o estado do jogo
     
@@ -171,9 +205,9 @@ int main() {
         screenClear();
 
         // 3. Desenha o tabuleiro 
-        // desenharTabuleiro(&jogo); FAZER ESTA FUNÇÃO POSTERIORMENTE !
+        desenharTabuleiro(&jogo); 
 
-       
+       // 4. Painel lateral
         desenharProximaFatia(&jogo);
        
         screenUpdate();
