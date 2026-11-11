@@ -105,9 +105,10 @@ void processaEntrada (EstadoJogo *jogo) {
                 if (jogo->fatiaAtual.x < larguraTab - 1) jogo->fatiaAtual.x++;
                 break;
                 
-            case 's':     
+            case 's':
             case 'S':
-                jogo->fatiaAtual.y++; 
+            if (jogo->fatiaAtual.y < alturaTab - 1)
+                jogo->fatiaAtual.y++;
                 break;
 
             case 'q':     
@@ -166,6 +167,12 @@ int main() {
         
         // 1. Processa botões 
         processaEntrada(&jogo);
+
+        if (timerTimeOver()) {
+            if (jogo.fatiaAtual.y < alturaTab - 1) {
+                jogo.fatiaAtual.y++;
+    }
+}
 
         // 2. Limpa a tela antes de desenhar o próximo 
         screenClear();
