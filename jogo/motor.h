@@ -7,12 +7,12 @@
 
 /* O tabuleiro e feito de CARTAS. Cada carta ocupa 2x2 quadradinhos do desenho,
    entao 5 x 10 cartas = 10 x 20 quadradinhos na tela. */
-#define larguraTab  5     /* colunas de cartas */
-#define alturaTab   10    /* linhas de cartas (a de cima e a linha 0) */
-#define CASAS_CARTA 2     /* quadradinhos por lado de uma carta (so para desenhar) */
+#define larguraTab    5     /* colunas de cartas */
+#define alturaTab     10    /* linhas de cartas (a de cima e a linha 0) */
+#define CASAS_CARTA   2     /* quadradinhos por lado de uma carta (so para desenhar) */
 
-#define VAZIA         0   /* casa sem carta */
-#define PIZZA_INTEIRA 6   /* soma que fecha uma pizza */
+#define VAZIA         0     /* casa sem carta */
+#define PIZZA_INTEIRA 6     /* soma que fecha uma pizza */
 
 /* As cartas de pizza (iguais aos desenhos). O numero guardado no tabuleiro e o da carta. */
 #define CARTA_CAIXA     1   /* caixa vazia            valor 0 */
@@ -24,10 +24,16 @@
 #define CARTA_FALTA_D   7   /* falta a fatia dir.     valor 5 */
 #define CARTA_INTEIRA   8   /* pizza inteira          valor 6 */
 #define TOMATE          9   /* bloco que nunca pontua: so ocupa espaco */
-#define PONTOS_PIZZA  3   /* par que soma 6 */
-#define PONTOS_IGUAL  1   /* par de cartas iguais */
-#define MAX_PARES     16
-#define TAM_NOME      32
+
+#define PONTOS_PIZZA    3   /* par que soma 6 */
+#define PONTOS_IGUAL    1   /* par de cartas iguais */
+#define MAX_PARES       16
+#define TAM_NOME        32
+
+/* Macros auxiliares para validacao de cartas e coordenadas */
+#define CARTA_VALIDA(c)      ((c) >= CARTA_CAIXA && (c) <= TOMATE)
+#define CARTA_PONTUAVEL(c)   ((c) >= CARTA_CAIXA && (c) <= CARTA_INTEIRA)
+#define POSICAO_VALIDA(x, y) ((x) >= 0 && (x) < larguraTab && (y) >= 0 && (y) < alturaTab)
 
 /* ---------- ESTRUTURAS ---------- */
 
@@ -74,8 +80,13 @@ typedef struct Recorde {
 
 /* ---------- ESTADO (alocacao dinamica) ---------- */
 
+/* Aloca e inicializa a estrutura principal do jogo e sua matriz. */
 EstadoJogo *estado_criar(void);
+
+/* Libera toda a memoria associada ao tabuleiro, fila de cartas e estado. */
 void estado_liberar(EstadoJogo *jogo);
+
+/* Reseta pontuacao, limpa o tabuleiro e preenche a fila inicial. */
 void iniciarJogo(EstadoJogo *jogo);
 
 /* ---------- FILA (lista encadeada) ---------- */
@@ -87,18 +98,30 @@ void peca_proxima(EstadoJogo *jogo);
 
 /* ---------- MOVIMENTO ---------- */
 
+/* Verifica se a peca atual pode se deslocar (dx, dy) sem colidir ou sair da borda. */
 bool pode_mover(const EstadoJogo *jogo, int dx, int dy);
 void mover_peca(EstadoJogo *jogo, int dx, int dy);
 void descer_peca(EstadoJogo *jogo);
 
 /* ---------- POUSAR, PONTUAR E CAIR ---------- */
 
-void fixar_peca(EstadoJogo *jogo);        /* a carta pousa; depois resolve os pares ate nao sobrar nenhum */
-int carta_complemento(int carta);         /* a carta que completa a pizza com esta (0 se nao tem: tomate/vazio) */
-int carta_aleatoria(void);                /* sorteia uma carta de pizza */
-int pontos_do_par(int a, int b);          
-int resolver_rodada(EstadoJogo *jogo);    /* acha os pares, pontua, tira do tabuleiro e aplica a gravidade */
-void aplicar_gravidade(EstadoJogo *jogo); /* cartas de cima descem para os buracos (sem fundir) */
+/* Fixa a peca atual no tabuleiro e resolve todas as combinacoes em cascata. */
+void fixar_peca(EstadoJogo *jogo);
+
+/* Retorna o ID da carta complementar que soma 6 (ou 0 se nao houver complemento). */
+int carta_complemento(int carta);
+
+/* Sorteia uma carta valida para entrar na fila. */
+int carta_aleatoria(void);
+
+/* Calcula a pontuacao obtida pela combinacao entre duas cartas adjacentes. */
+int pontos_do_par(int a, int b);
+
+/* Varre o tabuleiro em busca de pares, contabiliza pontos e aplica gravidade. */
+int resolver_rodada(EstadoJogo *jogo);
+
+/* Faz cartas suspensas cairem para preencher espacos vazios abaixo delas. */
+void aplicar_gravidade(EstadoJogo *jogo);
 
 /* ---------- PLACAR (lista encadeada + arquivo) ---------- */
 
@@ -107,4 +130,4 @@ Recorde *recordes_carregar(const char *arquivo);
 int recordes_salvar(const Recorde *inicio, const char *arquivo);
 void recordes_liberar(Recorde *inicio);
 
-#endif
+#endif /* MOTOR_H */

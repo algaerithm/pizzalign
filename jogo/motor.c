@@ -1,6 +1,20 @@
 #include "motor.h"
 #include <string.h>
 
+#define FILA_TAMANHO_INICIAL 3
+
+#ifndef CARTA_VALIDA
+#define CARTA_VALIDA(c)      ((c) >= CARTA_CAIXA && (c) <= TOMATE)
+#endif
+
+#ifndef CARTA_PONTUAVEL
+#define CARTA_PONTUAVEL(c)   ((c) >= CARTA_CAIXA && (c) <= CARTA_INTEIRA)
+#endif
+
+#ifndef POSICAO_VALIDA
+#define POSICAO_VALIDA(x, y) ((x) >= 0 && (x) < larguraTab && (y) >= 0 && (y) < alturaTab)
+#endif
+
 /* ---------- ESTADO (alocacao dinamica) ---------- */
 
 EstadoJogo *estado_criar(void) {
@@ -62,8 +76,8 @@ void iniciarJogo(EstadoJogo *jogo) {
     fila_liberar(jogo->filaFatias);
     jogo->filaFatias = NULL;
 
-    /* Preenche a fila inicial com 3 cartas */
-    for (int i = 0; i < 3; i++) {
+    /* Preenche a fila inicial de proximas cartas */
+    for (int i = 0; i < FILA_TAMANHO_INICIAL; i++) {
         fila_adicionar(&jogo->filaFatias, carta_aleatoria());
     }
 
@@ -111,12 +125,12 @@ void fila_liberar(NoFatia *inicio) {
 }
 
 void peca_proxima(EstadoJogo *jogo) {
-    if (!jogo) return;
+    if (!jogo || !jogo->tab) return;
 
     /* Pega a proxima carta da fila */
     jogo->fatiaAtual.pedacos = fila_remover(&jogo->filaFatias);
 
-    /* Adiciona uma nova carta no fim da fila para mante-la com 3 elementos */
+    /* Adiciona uma nova carta no fim da fila para mante-la preenchida */
     fila_adicionar(&jogo->filaFatias, carta_aleatoria());
 
     /* Posiciona no topo centro */
@@ -132,11 +146,11 @@ void peca_proxima(EstadoJogo *jogo) {
 /* ---------- MOVIMENTO ---------- */
 
 bool pode_mover(const EstadoJogo *jogo, int dx, int dy) {
-    if (!jogo) return false;
+    if (!jogo || !jogo->tab) return false;
     int nx = jogo->fatiaAtual.x + dx;
     int ny = jogo->fatiaAtual.y + dy;
 
-    if (nx < 0 || nx >= larguraTab || ny < 0 || ny >= alturaTab) {
+    if (!POSICAO_VALIDA(nx, ny)) {
         return false;
     }
 
@@ -168,17 +182,21 @@ void descer_peca(EstadoJogo *jogo) {
  *   metade esq. <-> metade dir.         caixa vazia <-> pizza inteira
  * Tomate e casa vazia nao completam nada (0). */
 int carta_complemento(int carta) {
-    switch (carta) {
-        case CARTA_CAIXA:    return CARTA_INTEIRA;
-        case CARTA_INTEIRA:  return CARTA_CAIXA;
-        case CARTA_FATIA_E:  return CARTA_FALTA_E;
-        case CARTA_FALTA_E:  return CARTA_FATIA_E;
-        case CARTA_FATIA_D:  return CARTA_FALTA_D;
-        case CARTA_FALTA_D:  return CARTA_FATIA_D;
-        case CARTA_METADE_E: return CARTA_METADE_D;
-        case CARTA_METADE_D: return CARTA_METADE_E;
-        default:             return 0;
-    }
+    static const int complemento[TOMATE + 1] = {
+        [VAZIA]          = 0,
+        [CARTA_CAIXA]    = CARTA_INTEIRA,
+        [CARTA_FATIA_E]  = CARTA_FALTA_E,
+        [CARTA_FATIA_D]  = CARTA_FALTA_D,
+        [CARTA_METADE_E] = CARTA_METADE_D,
+        [CARTA_METADE_D] = CARTA_METADE_E,
+        [CARTA_FALTA_E]  = CARTA_FATIA_E,
+        [CARTA_FALTA_D]  = CARTA_FATIA_D,
+        [CARTA_INTEIRA]  = CARTA_CAIXA,
+        [TOMATE]         = 0
+    };
+
+    if (!CARTA_VALIDA(carta)) return 0;
+    return complemento[carta];
 }
 
 /* Sorteia uma carta. A caixa vazia e a inteira saem menos (so casam entre si: 0 + 6). */
@@ -189,29 +207,33 @@ int carta_aleatoria(void) {
         CARTA_FALTA_E,  CARTA_FALTA_E,  CARTA_FALTA_E,  CARTA_FALTA_D,  CARTA_FALTA_D,  CARTA_FALTA_D,
         CARTA_CAIXA,    CARTA_CAIXA,    CARTA_INTEIRA,  CARTA_INTEIRA
     };
-    return sorteio[rand() % (int)(sizeof sorteio / sizeof sorteio[0])];
+    return sorteio[rand() % (int)(sizeof(sorteio) / sizeof(sorteio[0]))];
 }
 
 /* Regra de pontuacao de DUAS cartas vizinhas (a e b sao cartas):
  *   - uma completa a outra (so o lado equivalente) -> 3 pontos
- *   - as duas sao exatamente a mesma carta         -> 1 ponto
+ *   - as duas sao exatamente a mesma carta          -> 1 ponto
  *   - qualquer outra coisa (nao encaixa, tomate, vazio) -> 0, nao pontua.
  * Vale para cartas de qualquer jogador. */
 int pontos_do_par(int a, int b) {
-    if (a < CARTA_CAIXA || a > CARTA_INTEIRA || b < CARTA_CAIXA || b > CARTA_INTEIRA) return 0;
+    if (!CARTA_PONTUAVEL(a) || !CARTA_PONTUAVEL(b)) return 0;
     if (b == carta_complemento(a)) return PONTOS_PIZZA;
     if (a == b) return PONTOS_IGUAL;
     return 0;
 }
 
 void aplicar_gravidade(EstadoJogo *jogo) {
+    if (!jogo || !jogo->tab) return;
+
     for (int c = 0; c < larguraTab; c++) {
-        int destino = alturaTab - 1;                 /* proxima casa livre de baixo para cima */
+        int destino = alturaTab - 1; /* proxima casa livre de baixo para cima */
         for (int r = alturaTab - 1; r >= 0; r--) {
             if (jogo->tab[r][c] != VAZIA) {
-                int carta = jogo->tab[r][c];
-                jogo->tab[r][c] = VAZIA;
-                jogo->tab[destino--][c] = carta;
+                if (r != destino) {
+                    jogo->tab[destino][c] = jogo->tab[r][c];
+                    jogo->tab[r][c] = VAZIA;
+                }
+                destino--;
             }
         }
     }
@@ -222,12 +244,14 @@ void aplicar_gravidade(EstadoJogo *jogo) {
  * depois os iguais; cada carta entra em no maximo um par. Os pares somem do tabuleiro, as cartas
  * de cima descem e quem chamou repete ate nao sobrar par (cascata). Devolve os pontos da rodada. */
 int resolver_rodada(EstadoJogo *jogo) {
+    if (!jogo || !jogo->tab) return 0;
+
     bool usada[alturaTab][larguraTab];
     memset(usada, 0, sizeof usada);
     int total = 0;
-    const int dl[2] = {0, 1}, dc[2] = {1, 0};        /* direita e baixo */
+    const int dl[2] = {0, 1}, dc[2] = {1, 0}; /* direita e baixo */
 
-    for (int passada = 0; passada < 2; passada++) {  /* 0 = soma 6, 1 = iguais */
+    for (int passada = 0; passada < 2; passada++) { /* 0 = soma 6, 1 = iguais */
         for (int r = alturaTab - 1; r >= 0; r--) {
             for (int c = 0; c < larguraTab; c++) {
                 if (usada[r][c]) continue;
@@ -264,7 +288,8 @@ int resolver_rodada(EstadoJogo *jogo) {
 
 /* A carta pousa na casa onde parou e fica la (empilha). So some se formar par. */
 void fixar_peca(EstadoJogo *jogo) {
-    if (!jogo) return;
+    if (!jogo || !jogo->tab || jogo->gameOver) return;
+    if (!POSICAO_VALIDA(jogo->fatiaAtual.x, jogo->fatiaAtual.y)) return;
 
     jogo->numPares = 0;
     jogo->ganhoUltima = 0;
@@ -282,10 +307,12 @@ void fixar_peca(EstadoJogo *jogo) {
 /* ---------- PLACAR (lista encadeada + arquivo) ---------- */
 
 void recorde_inserir(Recorde **inicio, const char *nome, int pontos) {
+    if (!inicio || !nome) return;
+
     Recorde *novo = (Recorde *)malloc(sizeof(Recorde));
     if (!novo) return;
-    strncpy(novo->nome, nome, TAM_NOME - 1);
-    novo->nome[TAM_NOME - 1] = '\0';
+
+    snprintf(novo->nome, TAM_NOME, "%s", nome);
     novo->pontos = pontos;
     novo->prox = NULL;
 
@@ -303,6 +330,8 @@ void recorde_inserir(Recorde **inicio, const char *nome, int pontos) {
 }
 
 Recorde *recordes_carregar(const char *arquivo) {
+    if (!arquivo) return NULL;
+
     FILE *f = fopen(arquivo, "r");
     if (!f) return NULL;
 
@@ -319,6 +348,8 @@ Recorde *recordes_carregar(const char *arquivo) {
 }
 
 int recordes_salvar(const Recorde *inicio, const char *arquivo) {
+    if (!arquivo) return 0;
+
     FILE *f = fopen(arquivo, "w");
     if (!f) return 0;
 

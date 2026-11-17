@@ -1,7 +1,8 @@
 # Pizzalign - compilar com:  make
 # Se a raylib estiver em outra pasta:  make RAYLIB=C:/pizzalign/raylib/src
 RAYLIB ?= raylib/src
-CC = gcc
+CC     ?= gcc
+CFLAGS ?= -O2 -Wall -Wextra -std=c11
 
 ifeq ($(OS),Windows_NT)
   EXE  = pizzalign.exe
@@ -11,10 +12,16 @@ else
   LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 endif
 
+SRCS = main.c motor.c
+HDRS = motor.h assets_embutidos.h
+
 all: $(EXE)
 
-$(EXE): main.c motor.c motor.h assets_embutidos.h
-	$(CC) main.c motor.c -o $(EXE) -I $(RAYLIB) -L $(RAYLIB) $(LIBS)
+$(EXE): $(SRCS) $(HDRS)
+	$(CC) $(CFLAGS) $(SRCS) -o $(EXE) -I $(RAYLIB) -L $(RAYLIB) $(LIBS)
+
+debug: CFLAGS = -g -O0 -Wall -Wextra -std=c11
+debug: clean $(EXE)
 
 # so se voce trocar algo em assets/ (precisa de Python)
 embutidos:
@@ -23,4 +30,4 @@ embutidos:
 clean:
 	-rm -f pizzalign pizzalign.exe
 
-.PHONY: all embutidos clean
+.PHONY: all debug embutidos clean
