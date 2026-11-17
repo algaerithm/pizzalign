@@ -1,0 +1,4 @@
+*.exe
+recordes.txt
+__pycache__/
+/jogo/pizzalign

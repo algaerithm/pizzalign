@@ -1,0 +1,3 @@
+*.exe
+recordes.txt
+__pycache__/

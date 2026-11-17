@@ -1,0 +1,78 @@
+# Compila o PizzAlign a cada push e, quando o push e na main, publica o .exe do Windows numa release.
+#
+# Como funciona:
+#   1. Baixa a raylib (versao fixa, definida abaixo) e compila ela.
+#   2. Compila o jogo para Linux: serve de teste, se o codigo quebrar o push fica vermelho.
+#   3. Compila o jogo para Windows a partir do Linux (compilador MinGW). O .exe sai "estatico":
+#      roda sozinho, sem instalar raylib nem copiar DLL, e ja leva imagens, fonte e sons dentro dele.
+#   4. So na main: recria a release "ultima-versao" com o pizzalign-windows.zip.
+#
+# A release fica em: https://github.com/<usuario>/<repositorio>/releases/tag/ultima-versao
+name: Compilar e publicar
+
+on:
+  push:                     # qualquer branch: confere se compila; so a main publica
+  workflow_dispatch:        # permite rodar na mao pela aba Actions
+
+permissions:
+  contents: write           # necessario para criar a release
+
+env:
+  RAYLIB_VERSAO: "5.5"
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Instalar compiladores e bibliotecas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential git zip \
+            libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev \
+            gcc-mingw-w64-x86-64
+
+      - name: Baixar a raylib
+        run: |
+          git clone --depth 1 --branch "$RAYLIB_VERSAO" https://github.com/raysan5/raylib.git "$RUNNER_TEMP/raylib-linux"
+          cp -r "$RUNNER_TEMP/raylib-linux" "$RUNNER_TEMP/raylib-windows"
+
+      - name: Conferir se assets_embutidos.h esta em dia com a pasta assets
+        working-directory: jogo
+        run: |
+          cp assets_embutidos.h "$RUNNER_TEMP/embutidos_do_repositorio.h"
+          python3 gerar_embutidos.py
+          if ! diff -q --strip-trailing-cr assets_embutidos.h "$RUNNER_TEMP/embutidos_do_repositorio.h"; then
+            echo "::error::assets_embutidos.h esta desatualizado. Rode 'python gerar_embutidos.py' dentro de jogo/ e faca o commit."
+            exit 1
+          fi
+
+      - name: Compilar para Linux
+        working-directory: jogo
+        run: |
+          make -C "$RUNNER_TEMP/raylib-linux/src" PLATFORM=PLATFORM_DESKTOP -j4
+          gcc -Wall -Wextra main.c motor.c -o pizzalign \
+            -I "$RUNNER_TEMP/raylib-linux/src" -L "$RUNNER_TEMP/raylib-linux/src" \
+            -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+
+      - name: Compilar para Windows
+        working-directory: jogo
+        run: |
+          make -C "$RUNNER_TEMP/raylib-windows/src" PLATFORM=PLATFORM_DESKTOP OS=Windows_NT \
+            CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar -j4
+          x86_64-w64-mingw32-gcc -O2 -Wall -Wextra main.c motor.c -o pizzalign.exe \
+            -I "$RUNNER_TEMP/raylib-windows/src" -L "$RUNNER_TEMP/raylib-windows/src" \
+            -lraylib -lopengl32 -lgdi32 -lwinmm -static -mwindows
+          zip -j "$RUNNER_TEMP/pizzalign-windows.zip" pizzalign.exe LICENCA-fonte-Caveat.txt
+
+      - name: Publicar a release (so na main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima-versao --yes --cleanup-tag --repo "$GITHUB_REPOSITORY" || true
+          gh release create ultima-versao "$RUNNER_TEMP/pizzalign-windows.zip" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "PizzAlign - última versão" \
+            --notes "Compilado automaticamente a partir do commit ${GITHUB_SHA::7} da main. Baixe o pizzalign-windows.zip, extraia e abra o pizzalign.exe: não precisa instalar nada."
