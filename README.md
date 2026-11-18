@@ -18,6 +18,7 @@
 
 - [Jogar agora (Windows)](#jogar-agora-windows)
 - [Sobre o jogo](#sobre-o-jogo)
+- [Demonstração de jogabilidade](#demonstração-de-jogabilidade)
 - [Regras](#regras)
 - [Dificuldade](#dificuldade)
 - [Controles](#controles)
@@ -51,6 +52,16 @@ O design e as mecânicas vêm de vários títulos:
 | **Overcooked** | O clima de cozinha: ingredientes, madeira e personalidade. |
 | **Make7 / 2048** | Cartas bem marcadas no tabuleiro. |
 | **Tetris Effect** | Feedback que torna cada combinação satisfatória: pontos subindo, farelos voando e um som para cada fusão. |
+
+## Demonstração de jogabilidade
+
+<br>
+<p align="center">
+  <a href="https://www.youtube.com/shorts/eblx-C7nV0I">
+    <img src="https://img.shields.io/badge/▶_Assistir_no_YouTube-red?style=for-the-badge" alt="Vídeo de demonstração">
+  </a>
+</p>
+<br/>
 
 ## Regras
 
